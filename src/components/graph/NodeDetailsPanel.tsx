@@ -30,17 +30,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
   const [actionSimulated, setActionSimulated] = useState(false);
 
   if (!nodeId || !nodeData) {
-    return (
-      <div className="w-80 h-full bg-[#090d16] border-l border-slate-800 p-6 flex flex-col justify-center items-center text-center text-slate-400 select-none">
-        <div className="w-10 h-10 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-500 mb-3">
-          <Terminal className="w-5 h-5 text-blue-400" />
-        </div>
-        <h4 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">Dependency Inspector</h4>
-        <p className="text-[11px] text-slate-400 mt-1.5 max-w-[200px] leading-relaxed">
-          Select any node in the canvas to trace multi-hop dependencies and FalkorDB context.
-        </p>
-      </div>
-    );
+    return null;
   }
 
   const isCritical = nodeData.status === 'CRITICAL' || nodeData.status === 'BLOCKED';
@@ -59,7 +49,7 @@ export const NodeDetailsPanel: React.FC<NodeDetailsPanelProps> = ({
   };
 
   return (
-    <div className="w-84 md:w-96 h-full bg-[#090d16]/98 backdrop-blur-md border-l border-slate-800 flex flex-col text-slate-200 text-xs overflow-hidden z-10 shrink-0 select-none">
+    <div className="absolute top-0 right-0 bottom-0 w-84 md:w-96 bg-[#090d16]/95 backdrop-blur-md border-l border-slate-800 flex flex-col text-slate-200 text-xs overflow-hidden z-30 select-none shadow-2xl transition-all">
       {/* Header */}
       <div className="p-3.5 border-b border-slate-800 flex items-center justify-between">
         <div className="min-w-0 pr-2">

@@ -272,7 +272,7 @@ export const SimpleOverviewDashboard: React.FC<SimpleOverviewDashboardProps> = (
 
       {/* 4. KNOWLEDGE GRAPH HERO */}
       {showGraphHero && (
-        <section className="space-y-2.5">
+        <section className="relative z-10 space-y-3 pt-2 pb-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
