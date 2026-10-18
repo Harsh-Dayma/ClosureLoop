@@ -9,7 +9,7 @@ MATCH (n) DETACH DELETE n;
 // 2. Create Core Workflow & Business Outcome Nodes
 CREATE (wf:Workflow {
   id: 'wf-001',
-  title: 'Employee Onboarding - Jordan Hayes',
+  title: 'Employee Onboarding - Rahul Sharma',
   department: 'Core Platform Engineering',
   category: 'HR_IT_ONBOARDING',
   status: 'BLOCKED',
@@ -33,9 +33,9 @@ CREATE (outcome:BusinessOutcome {
 // 3. Create Employee & Stakeholder Persona Nodes
 CREATE (emp:Employee:Person {
   id: 'emp-90214',
-  name: 'Jordan Hayes',
+  name: 'Rahul Sharma',
   role: 'Staff Platform Engineer',
-  email: 'jordan.hayes@closureloop.io',
+  email: 'rahul.sharma@closureloop.io',
   department: 'Engineering',
   startDate: '2026-10-14',
   status: 'ACTIVE_PROVISIONED'

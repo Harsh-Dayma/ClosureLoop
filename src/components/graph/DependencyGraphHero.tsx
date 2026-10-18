@@ -119,7 +119,7 @@ export const DependencyGraphHero: React.FC<DependencyGraphHeroProps> = ({
                   1 Bottleneck Detected
                 </span>
                 <span className="text-[10px] text-slate-500 font-mono bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                  8 Nodes · 8 Edges
+                  {nodes.length} Nodes · {edges.length} Edges
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 mt-0.5">

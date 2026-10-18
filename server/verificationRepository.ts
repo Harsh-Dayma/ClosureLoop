@@ -18,7 +18,7 @@ const INITIAL_VERIFICATIONS: WorkflowVerificationRecord[] = [
   {
     id: 'vr-wf-001',
     workflowId: 'wf-001',
-    workflowTitle: 'Employee Onboarding - Jordan Hayes',
+    workflowTitle: 'Employee Onboarding - Rahul Sharma (Jordan Hayes)',
     department: 'Core Platform Engineering',
     targetOutcome: 'First Code Commit Telemetry Verified',
     overallStatus: 'INCOMPLETE',

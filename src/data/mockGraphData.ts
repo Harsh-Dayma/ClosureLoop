@@ -14,16 +14,41 @@ import type { FalkorGraphData } from '../types/graph';
  */
 export const onboardingGraphData: FalkorGraphData = {
   graphId: 'graph-onboarding-001',
-  name: 'Employee Onboarding: Jordan Hayes (Staff Engineer)',
+  name: 'Employee Onboarding: Rahul Sharma (Staff Engineer)',
   description: 'Cross-functional dependency chain across HR, IT, Security, and Engineering',
   nodes: [
+    {
+      id: 'person-employee',
+      type: 'customDependency',
+      position: { x: 80, y: 30 },
+      data: {
+        label: 'Rahul Sharma',
+        sublabel: 'New Hire · Staff Platform Engineer',
+        entityType: 'PERSON',
+        status: 'PENDING',
+        owner: 'Engineering',
+        team: 'Core Platform Engineering',
+        blockerReason: 'Awaiting AWS IAM production credentials and repository access approval.',
+        confidence: 1.0,
+        lastUpdated: 'Just now',
+        cypherQuery: 'MATCH (e:Person {name: "Rahul Sharma"})<-[:FOR_EMPLOYEE]-(w:Workflow) RETURN e, w;',
+        metadata: {
+          'Candidate': 'Rahul Sharma',
+          'Role': 'Staff Platform Engineer',
+          'Email': 'rahul.sharma@closureloop.io',
+          'Department': 'Core Platform Engineering',
+          'Status': 'Onboarding Stalled by Security',
+          'Action Required': 'None (Awaiting Sarah Lin approval)'
+        }
+      }
+    },
     {
       id: 'wf-onboarding',
       type: 'customDependency',
       position: { x: 380, y: 30 },
       data: {
         label: 'Employee Onboarding',
-        sublabel: 'Outcome Target: Active & Productive',
+        sublabel: 'Candidate: Rahul Sharma',
         entityType: 'WORKFLOW',
         status: 'BLOCKED',
         owner: 'People Operations',
@@ -34,7 +59,7 @@ export const onboardingGraphData: FalkorGraphData = {
         cypherQuery: 'MATCH (w:Workflow {id: "wf-onboarding"})-[:REQUIRES*1..3]->(b) WHERE b.status = "BLOCKED" RETURN w, b;',
         metadata: {
           'Target Role': 'Staff Backend Engineer',
-          'Candidate': 'Jordan Hayes',
+          'Candidate': 'Rahul Sharma',
           'Start Date': 'October 16, 2026',
           'SLA Status': 'Breached (+18h)'
         }
@@ -195,6 +220,13 @@ export const onboardingGraphData: FalkorGraphData = {
     }
   ],
   edges: [
+    {
+      id: 'e-wf-employee',
+      source: 'wf-onboarding',
+      target: 'person-employee',
+      relationship: 'FOR_EMPLOYEE',
+      label: 'Onboarding for'
+    },
     {
       id: 'e-manager-wf',
       source: 'person-manager',

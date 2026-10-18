@@ -21,7 +21,7 @@ const fallbackGraphData: FalkorGraphData = {
       type: 'customEntity',
       position: { x: 50, y: 150 },
       data: {
-        label: 'Employee Onboarding - Jordan Hayes',
+        label: 'Employee Onboarding - Rahul Sharma',
         entityType: 'WORKFLOW' as EntityType,
         status: 'BLOCKED' as NodeStatus,
         sublabel: 'HR / IT / Security Lifecycle',
@@ -32,6 +32,7 @@ const fallbackGraphData: FalkorGraphData = {
         lastUpdated: '12m ago',
         metadata: {
           'Workflow ID': 'wf-001',
+          'Candidate': 'Rahul Sharma',
           'Target Outcome': 'First Code Commit Telemetry Verified',
           'Days Stalled': 4.2,
           'Department': 'Core Platform Engineering'
@@ -44,7 +45,7 @@ const fallbackGraphData: FalkorGraphData = {
       type: 'customEntity',
       position: { x: 280, y: 40 },
       data: {
-        label: 'Jordan Hayes',
+        label: 'Rahul Sharma',
         entityType: 'EMPLOYEE' as EntityType,
         status: 'ACTIVE' as NodeStatus,
         sublabel: 'Staff Platform Engineer',
@@ -53,8 +54,9 @@ const fallbackGraphData: FalkorGraphData = {
         confidence: 1.0,
         lastUpdated: '4d ago',
         metadata: {
+          'Candidate': 'Rahul Sharma',
           'Employee ID': 'EMP-90214',
-          'Email': 'jordan.hayes@closureloop.io',
+          'Email': 'rahul.sharma@closureloop.io',
           'Start Date': '2026-10-14',
           'Provisioning Status': 'PROFILE_ACTIVE'
         },

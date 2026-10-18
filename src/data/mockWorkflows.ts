@@ -11,8 +11,8 @@ export const dashboardMetrics: DashboardMetrics = {
 export const sampleWorkflows: WorkflowItem[] = [
   {
     id: 'wf-001',
-    title: 'Employee onboarding incomplete',
-    description: 'Full-cycle engineering new-hire access provisioning across Okta, GitHub Enterprise, and AWS dev clusters.',
+    title: 'Employee Onboarding — Rahul Sharma',
+    description: 'Full-cycle engineering new-hire access provisioning for Rahul Sharma across Okta, GitHub Enterprise, and AWS dev clusters.',
     team: 'HR Operations',
     blocker: 'Application access approval missing',
     status: 'Blocked',
