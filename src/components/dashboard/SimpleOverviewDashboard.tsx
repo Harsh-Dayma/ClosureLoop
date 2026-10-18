@@ -295,9 +295,9 @@ export const SimpleOverviewDashboard: React.FC<SimpleOverviewDashboardProps> = (
                 onOpenExplorer(topBlockedWorkflow?.id);
               }
             }}
-            onOpenInvestigation={(title, blocker) => {
+            onOpenInvestigation={(title, blocker, wfId) => {
               if (onOpenInvestigation) {
-                onOpenInvestigation(title, blocker, topBlockedWorkflow?.id);
+                onOpenInvestigation(title, blocker, wfId || topBlockedWorkflow?.id);
               } else {
                 onSelectWorkflow(topBlockedWorkflow, 'investigation');
               }

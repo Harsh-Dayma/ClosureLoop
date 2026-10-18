@@ -27,15 +27,13 @@ import {
   MapPin,
   Maximize2,
   Minimize2,
-  ShieldCheck,
-  Lock,
-  Info
+  ShieldCheck
 } from 'lucide-react';
 
 interface DependencyGraphHeroProps {
   currentPersona?: UserPersona;
   onOpenExplorer: () => void;
-  onOpenInvestigation: (workflowTitle: string, suspectedBlocker: string) => void;
+  onOpenInvestigation: (workflowTitle: string, suspectedBlocker: string, workflowId?: string) => void;
 }
 
 /**
@@ -404,55 +402,33 @@ export const DependencyGraphHero: React.FC<DependencyGraphHeroProps> = ({
             )}
           </button>
 
-          {/* Explorer Button: Only for Manager & Admin */}
-          {currentPersona?.role !== 'EMPLOYEE' ? (
-            <button
-              type="button"
-              onClick={onOpenExplorer}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
-              title="Open Graph Explorer"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
-              <span className="hidden md:inline">Explorer</span>
-            </button>
-          ) : (
-            <span 
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-400 bg-slate-50 border border-slate-200 rounded-lg cursor-not-allowed opacity-75"
-              title="Enterprise Graph Explorer is restricted to Manager and Admin roles under Least Privilege Access policy."
-            >
-              <Lock className="w-3 h-3 text-slate-400" />
-              <span className="hidden md:inline">Explorer (Restricted)</span>
-            </span>
-          )}
+          {/* Explorer Button */}
+          <button
+            type="button"
+            onClick={onOpenExplorer}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors cursor-pointer"
+            title="Open Graph Explorer"
+          >
+            <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden md:inline">Explorer</span>
+          </button>
 
-          {/* Investigate Button: Only for Manager & Admin; Employee gets friendly Status View */}
-          {currentPersona?.role !== 'EMPLOYEE' ? (
-            <button
-              type="button"
-              onClick={() => onOpenInvestigation(
-                scopedGraph.name, 
-                'Security Approval missing from Sarah Lin'
-              )}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Investigate</span>
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={() => {
-                setSelectedNodeId('appr-security');
-                const apprNode = nodes.find(n => n.id === 'appr-security');
-                if (apprNode) setSelectedNodeData(apprNode.data as unknown as FalkorNodeProperties);
-              }}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg shadow-xs transition-colors"
-              title="Inspect pending security review requirements"
-            >
-              <Info className="w-3.5 h-3.5 text-blue-600" />
-              <span>View Blocker Status</span>
-            </button>
-          )}
+          {/* Investigate Button */}
+          <button
+            type="button"
+            onClick={() => onOpenInvestigation(
+              scopedGraph.name, 
+              currentPersona?.role === 'EMPLOYEE'
+                ? 'Pending Security Approval from Sarah Lin'
+                : 'Security Approval missing from Sarah Lin',
+              'wf-001'
+            )}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors cursor-pointer"
+            title="Investigate dependency blocker"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Investigate</span>
+          </button>
         </div>
       </div>
 

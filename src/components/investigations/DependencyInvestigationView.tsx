@@ -25,7 +25,6 @@ import {
   ArrowRight,
   Info,
   Zap,
-  Lock,
   ShieldCheck
 } from 'lucide-react';
 
@@ -47,8 +46,10 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
   currentPersona,
 }) => {
   // Data state initialized directly from mock investigation adapter
+  const isEmployee = currentPersona?.role === 'EMPLOYEE';
   const [cases, setCases] = useState<InvestigationCase[]>(mockInvestigationCases);
   const [selectedCaseId, setSelectedCaseId] = useState<string>(() => {
+    if (currentPersona?.role === 'EMPLOYEE') return 'INV-2026-8812';
     if (selectedWorkflowId) {
       const match = mockInvestigationCases.find((c) => c.workflowId === selectedWorkflowId);
       if (match) return match.id;
@@ -64,9 +65,15 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
   const [findingCategoryFilter, setFindingCategoryFilter] = useState<'ALL' | FindingCategory>('ALL');
   const [isRetraversing, setIsRetraversing] = useState(false);
 
-  // Sync selectedCaseId when navigating from other modules
+  // Sync selectedCaseId when navigating from other modules or persona change
   const [prevSelectedWorkflowId, setPrevSelectedWorkflowId] = useState(selectedWorkflowId);
-  if (selectedWorkflowId !== prevSelectedWorkflowId) {
+  const [prevRole, setPrevRole] = useState(currentPersona?.role);
+  if (currentPersona?.role !== prevRole) {
+    setPrevRole(currentPersona?.role);
+    if (currentPersona?.role === 'EMPLOYEE') {
+      setSelectedCaseId('INV-2026-8812');
+    }
+  } else if (selectedWorkflowId !== prevSelectedWorkflowId) {
     setPrevSelectedWorkflowId(selectedWorkflowId);
     if (selectedWorkflowId) {
       const match = cases.find((c) => c.workflowId === selectedWorkflowId);
@@ -97,6 +104,9 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
   // Filtered case list for left sidebar
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
+      if (isEmployee && c.workflowId !== 'wf-001') {
+        return false;
+      }
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const matches =
@@ -111,7 +121,7 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
       }
       return true;
     });
-  }, [cases, searchQuery, statusFilter]);
+  }, [cases, searchQuery, statusFilter, isEmployee]);
 
   // Filter findings in active case
   const filteredFindings = useMemo(() => {
@@ -152,47 +162,7 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
     setTimeout(() => setActionNotice(null), 4000);
   };
 
-  // Enterprise Role Authorization Guard for EMPLOYEE
-  if (currentPersona?.role === 'EMPLOYEE') {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-200 select-none min-h-[600px]">
-        <div className="max-w-md w-full bg-[#0d1322] border border-slate-800 rounded-2xl p-6 shadow-2xl text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
-            <Lock className="w-7 h-7" />
-          </div>
 
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/60">
-              Access Restricted · Least Privilege Policy
-            </span>
-            <h2 className="text-lg font-bold text-white mt-2">
-              Investigation Room Restricted
-            </h2>
-            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-              Role <strong className="text-slate-200 font-mono">EMPLOYEE</strong> ({currentPersona.name}) does not have clearance to open deep evidence vaults or audit cross-system investigation logs.
-            </p>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800/80 text-[11px] text-slate-300 text-left space-y-1.5">
-            <div className="flex items-center gap-1.5 text-slate-400 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-              <span>Recommended Action:</span>
-            </div>
-            <p className="text-slate-400 text-[11px] leading-relaxed">
-              Check the scoped personal graph on your Home Dashboard. All items requiring your personal attention are highlighted there.
-            </p>
-          </div>
-
-          <button
-            onClick={onBackToOverview}
-            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md flex items-center justify-center gap-2"
-          >
-            <span>Return to Home Dashboard</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 select-none font-sans text-slate-900">
@@ -210,10 +180,17 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
             <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight font-sans">
               Dependency Investigation
             </h1>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300 font-semibold flex items-center gap-1">
-              <Radio className="w-2.5 h-2.5 text-amber-500 animate-pulse" />
-              Module 3 Active
-            </span>
+            {isEmployee ? (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-300 font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-blue-600" />
+                Personal Scoped Case · Least Privilege Cleared
+              </span>
+            ) : (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-300 font-semibold flex items-center gap-1">
+                <Radio className="w-2.5 h-2.5 text-amber-500 animate-pulse" />
+                Module 3 Active
+              </span>
+            )}
             <button
               onClick={() => setShowFalkorPrereqsModal(true)}
               className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 transition-colors flex items-center gap-1 cursor-pointer"
@@ -493,34 +470,52 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
 
                 {/* Direct Remediation Nudges */}
                 <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                  {onOpenActionCenter && (
-                    <button
-                      onClick={() => onOpenActionCenter('ACT-2026-0901')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors"
-                      title="Review proposed resolution in Action Center"
-                    >
-                      <Zap className="w-3.5 h-3.5" />
-                      <span>Review in Action Center</span>
-                    </button>
-                  )}
+                  {isEmployee ? (
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-blue-800 bg-blue-50 border border-blue-200 rounded-lg">
+                        <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                        <span>InfoSec Escalation Active (SEC-TKT-9912)</span>
+                      </div>
+                      <button
+                        onClick={onOpenExplorer}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-2xs transition-colors cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Inspect in Graph Explorer</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      {onOpenActionCenter && (
+                        <button
+                          onClick={() => onOpenActionCenter('ACT-2026-0901')}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-xs transition-colors"
+                          title="Review proposed resolution in Action Center"
+                        >
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>Review in Action Center</span>
+                        </button>
+                      )}
 
-                  <button
-                    onClick={() => handleDispatchNudge(activeCase.responsibleOwner!.name, 'Slack (@slin)')}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs transition-colors"
-                  >
-                    <Send className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Nudge via Slack</span>
-                  </button>
+                      <button
+                        onClick={() => handleDispatchNudge(activeCase.responsibleOwner!.name, 'Slack (@slin)')}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-lg shadow-xs transition-colors"
+                      >
+                        <Send className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Nudge via Slack</span>
+                      </button>
 
-                  {activeCase.responsibleOwner.backupDelegation && (
-                    <button
-                      onClick={() => handleEscalateDeputy('Mark Vance (Deputy Security Lead)')}
-                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
-                      title="Route to secondary approver under SEC-ESC-03"
-                    >
-                      <UserCheck className="w-3.5 h-3.5 text-amber-600" />
-                      <span>Route to Deputy</span>
-                    </button>
+                      {activeCase.responsibleOwner.backupDelegation && (
+                        <button
+                          onClick={() => handleEscalateDeputy('Mark Vance (Deputy Security Lead)')}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg transition-colors"
+                          title="Route to secondary approver under SEC-ESC-03"
+                        >
+                          <UserCheck className="w-3.5 h-3.5 text-amber-600" />
+                          <span>Route to Deputy</span>
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

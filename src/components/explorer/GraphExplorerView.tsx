@@ -37,7 +37,6 @@ import {
   Zap,
   ChevronRight,
   Sparkles,
-  Lock,
   ShieldCheck
 } from 'lucide-react';
 
@@ -66,7 +65,17 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
   const [showFalkorPrereqsModal, setShowFalkorPrereqsModal] = useState<boolean>(false);
 
   // Filters State
-  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>(initialWorkflowId);
+  const isEmployee = currentPersona?.role === 'EMPLOYEE';
+  const [selectedWorkflowId, setSelectedWorkflowId] = useState<string>(
+    currentPersona?.role === 'EMPLOYEE' ? 'wf-001' : initialWorkflowId
+  );
+  const [prevRole, setPrevRole] = useState(currentPersona?.role);
+  if (currentPersona?.role !== prevRole) {
+    setPrevRole(currentPersona?.role);
+    if (currentPersona?.role === 'EMPLOYEE') {
+      setSelectedWorkflowId('wf-001');
+    }
+  }
   const [selectedEntityType, setSelectedEntityType] = useState<EntityType | 'ALL'>('ALL');
   const [selectedStatus, setSelectedStatus] = useState<NodeStatus | 'ALL'>('ALL');
   const [onlyBlockers, setOnlyBlockers] = useState<boolean>(false);
@@ -102,10 +111,11 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
         const [healthStatus, envelope] = await Promise.all([
           GraphService.checkHealth(),
           GraphService.getGraphTopology({
-            workflowId: selectedWorkflowId === 'ALL' ? undefined : selectedWorkflowId,
+            workflowId: (isEmployee || selectedWorkflowId === 'ALL') ? (isEmployee ? 'wf-001' : undefined) : selectedWorkflowId,
             entityType: selectedEntityType,
             status: selectedStatus,
-            onlyBlockers
+            onlyBlockers,
+            userRole: currentPersona?.role
           })
         ]);
 
@@ -174,7 +184,9 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
     refreshTrigger,
     selectedNodeId,
     setNodes,
-    setEdges
+    setEdges,
+    currentPersona?.role,
+    isEmployee
   ]);
 
   // Active selected node data
@@ -271,49 +283,7 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
     return { incoming, outgoing };
   }, [selectedNodeId, graphEnvelope]);
 
-  // Enterprise Role Authorization Guard for EMPLOYEE
-  if (currentPersona?.role === 'EMPLOYEE') {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-200 select-none min-h-[600px]">
-        <div className="max-w-md w-full bg-[#0d1322] border border-slate-800 rounded-2xl p-6 shadow-2xl text-center space-y-4">
-          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
-            <Lock className="w-7 h-7" />
-          </div>
 
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/60">
-              Access Restricted · Least Privilege Policy
-            </span>
-            <h2 className="text-lg font-bold text-white mt-2">
-              Enterprise Graph Explorer Locked
-            </h2>
-            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
-              Role <strong className="text-slate-200 font-mono">EMPLOYEE</strong> ({currentPersona.name}) does not have security authorization to inspect full organizational dependency topologies or execute raw OpenCypher queries on FalkorDB.
-            </p>
-          </div>
-
-          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800/80 text-[11px] text-slate-300 text-left space-y-1.5">
-            <div className="flex items-center gap-1.5 text-slate-400 font-medium">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-              <span>Authorized Locations for Employee Role:</span>
-            </div>
-            <ul className="list-disc list-inside text-slate-400 pl-1 space-y-1 text-[10px]">
-              <li>Home Dashboard &rarr; Scoped Personal Onboarding Subgraph</li>
-              <li>My Work &rarr; Pending Tasks & Identity Handshakes</li>
-              <li>History &rarr; Cryptographic Outcome Verification</li>
-            </ul>
-          </div>
-
-          <button
-            onClick={onBackToOverview}
-            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md flex items-center justify-center gap-2"
-          >
-            <span>Return to Home Dashboard</span>
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50 overflow-hidden select-none">
@@ -339,6 +309,14 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
                 <Network className="w-5 h-5 text-blue-600" />
                 Enterprise Graph Explorer
               </h1>
+
+              {/* Scoped Badge for Employee */}
+              {isEmployee && (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-blue-50 text-blue-700 border border-blue-200 shadow-xs">
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-600" />
+                  <span>Personal Scoped View (Rahul Sharma · Least Privilege)</span>
+                </span>
+              )}
 
               {/* Live FalkorDB Connectivity Badge */}
               {health?.falkorConnected ? (
@@ -411,11 +389,18 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
             <select
               value={selectedWorkflowId}
               onChange={(e) => setSelectedWorkflowId(e.target.value)}
-              className="px-2.5 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-800 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-blue-500"
+              disabled={isEmployee}
+              className="px-2.5 py-1 rounded-md border border-slate-200 bg-slate-50 text-slate-800 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-80"
             >
-              <option value="wf-001">Employee Onboarding - Jordan Hayes (wf-001)</option>
-              <option value="wf-002">Release Approval v2.14.0 (wf-002)</option>
-              <option value="ALL">All Enterprise Workflows (Full Topology)</option>
+              {isEmployee ? (
+                <option value="wf-001">Employee Onboarding — Rahul Sharma (wf-001)</option>
+              ) : (
+                <>
+                  <option value="wf-001">Employee Onboarding - Jordan Hayes (wf-001)</option>
+                  <option value="wf-002">Release Approval v2.14.0 (wf-002)</option>
+                  <option value="ALL">All Enterprise Workflows (Full Topology)</option>
+                </>
+              )}
             </select>
           </div>
 
@@ -509,18 +494,26 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
         <div className="flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
           <span>
-            <strong>Bottleneck Demonstration:</strong> Jordan Hayes (EMP-90214) HR & Okta tasks are 100% complete, but target outcome (<strong>First Code Commit</strong>) is blocked by pending Tier-1 security sign-off from <strong>Sarah Lin</strong>.
+            {isEmployee ? (
+              <>
+                <strong>Personal Onboarding Dependency Status:</strong> Rahul Sharma (EMP-90214) HR &amp; identity tasks are complete. Target outcome (<strong>First Code Commit</strong>) is waiting on Tier-1 security sign-off from <strong>Sarah Lin (SEC-TKT-9912)</strong>.
+              </>
+            ) : (
+              <>
+                <strong>Bottleneck Demonstration:</strong> Jordan Hayes (EMP-90214) HR &amp; Okta tasks are 100% complete, but target outcome (<strong>First Code Commit</strong>) is blocked by pending Tier-1 security sign-off from <strong>Sarah Lin</strong>.
+              </>
+            )}
           </span>
         </div>
         <button
           onClick={() => onOpenInvestigation(
-            'Employee onboarding incomplete',
+            isEmployee ? 'Employee Onboarding — Rahul Sharma' : 'Employee onboarding incomplete',
             'Application access approval missing from Sarah Lin',
             'wf-001'
           )}
-          className="text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 shrink-0 ml-4 hover:underline"
+          className="text-[11px] font-bold text-blue-700 hover:text-blue-900 flex items-center gap-1 shrink-0 ml-4 hover:underline cursor-pointer"
         >
-          <span>Open in Module 3 Investigation Room</span>
+          <span>{isEmployee ? 'View Investigation Case' : 'Open in Module 3 Investigation Room'}</span>
           <ArrowRight className="w-3 h-3" />
         </button>
       </div>
@@ -805,9 +798,16 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
                   {inspectorTab === 'cypher' && (
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                          FalkorDB Cypher Query
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            FalkorDB Cypher Query
+                          </span>
+                          {isEmployee && (
+                            <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
+                              Read-Only Preview
+                            </span>
+                          )}
+                        </div>
                         <button
                           onClick={() => handleCopyCypher(
                             selectedNodeData.cypherQuery || GraphService.generateCypherForNode(selectedNodeId || '')
@@ -831,7 +831,10 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
                         {selectedNodeData.cypherQuery || GraphService.generateCypherForNode(selectedNodeId || '')}
                       </pre>
                       <p className="text-[11px] text-slate-500 leading-relaxed">
-                        This Cypher statement can be executed directly in the FalkorDB Redis CLI or FalkorDB Browser to trace incoming and outgoing property relationships.
+                        {isEmployee
+                          ? 'OpenCypher query inspection for your personal onboarding node. Direct FalkorDB database execution is restricted to SecOps and Platform Admins under enterprise security policy.'
+                          : 'This Cypher statement can be executed directly in the FalkorDB Redis CLI or FalkorDB Browser to trace incoming and outgoing property relationships.'
+                        }
                       </p>
                     </div>
                   )}
@@ -853,48 +856,76 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
                         </div>
                       </div>
 
-                      <button
-                        onClick={handleDispatchReminder}
-                        disabled={reminderDispatched}
-                        className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 ${
-                          reminderDispatched
-                            ? 'bg-emerald-600 text-white'
-                            : 'bg-blue-600 hover:bg-blue-700 text-white'
-                        }`}
-                      >
-                        {reminderDispatched ? (
-                          <>
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            <span>Reminder Dispatched to Sarah Lin!</span>
-                          </>
-                        ) : (
-                          <>
-                            <Zap className="w-3.5 h-3.5" />
-                            <span>Simulate Dispatch Reminder</span>
-                          </>
-                        )}
-                      </button>
+                      {isEmployee ? (
+                        <div className="space-y-3">
+                          <div className="p-3 rounded-lg border border-blue-200 bg-blue-50/70 space-y-1.5">
+                            <div className="flex items-center gap-1.5 font-bold text-blue-900 text-xs">
+                              <ShieldCheck className="w-4 h-4 text-blue-600" />
+                              <span>InfoSec Review in Progress</span>
+                            </div>
+                            <p className="text-[11px] text-blue-800 leading-relaxed">
+                              Your access ticket (SEC-TKT-9912) is queued with Security Operations. SLA reminders are active. No manual action is required on your end.
+                            </p>
+                          </div>
 
-                      <button
-                        onClick={() => onOpenInvestigation(
-                          'Employee onboarding incomplete',
-                          'Application access approval missing from Sarah Lin',
-                          'wf-001'
-                        )}
-                        className="w-full py-2 px-3 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-                      >
-                        <ExternalLink className="w-3.5 h-3.5" />
-                        <span>Open Full Investigation Case</span>
-                      </button>
+                          <button
+                            onClick={() => onOpenInvestigation(
+                              'Employee Onboarding — Rahul Sharma',
+                              'Pending Security Sign-off',
+                              'wf-001'
+                            )}
+                            className="w-full py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors flex items-center justify-center gap-1.5 shadow-xs"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>View Onboarding Investigation Case</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <button
+                            onClick={handleDispatchReminder}
+                            disabled={reminderDispatched}
+                            className={`w-full py-2 px-3 rounded-lg text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 ${
+                              reminderDispatched
+                                ? 'bg-emerald-600 text-white'
+                                : 'bg-blue-600 hover:bg-blue-700 text-white'
+                            }`}
+                          >
+                            {reminderDispatched ? (
+                              <>
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>Reminder Dispatched to Sarah Lin!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Zap className="w-3.5 h-3.5" />
+                                <span>Simulate Dispatch Reminder</span>
+                              </>
+                            )}
+                          </button>
 
-                      {onOpenActionCenter && (
-                        <button
-                          onClick={() => onOpenActionCenter('ACT-2026-0901')}
-                          className="w-full py-2 px-3 rounded-lg border border-blue-200 bg-blue-50/60 hover:bg-blue-100/80 text-blue-900 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
-                        >
-                          <Zap className="w-3.5 h-3.5 text-blue-600" />
-                          <span>Review in Action Center (ACT-2026-0901)</span>
-                        </button>
+                          <button
+                            onClick={() => onOpenInvestigation(
+                              'Employee onboarding incomplete',
+                              'Application access approval missing from Sarah Lin',
+                              'wf-001'
+                            )}
+                            className="w-full py-2 px-3 rounded-lg border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Open Full Investigation Case</span>
+                          </button>
+
+                          {onOpenActionCenter && (
+                            <button
+                              onClick={() => onOpenActionCenter('ACT-2026-0901')}
+                              className="w-full py-2 px-3 rounded-lg border border-blue-200 bg-blue-50/60 hover:bg-blue-100/80 text-blue-900 text-xs font-semibold transition-colors flex items-center justify-center gap-1.5"
+                            >
+                              <Zap className="w-3.5 h-3.5 text-blue-600" />
+                              <span>Review in Action Center (ACT-2026-0901)</span>
+                            </button>
+                          )}
+                        </>
                       )}
                     </div>
                   )}

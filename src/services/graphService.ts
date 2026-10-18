@@ -76,15 +76,42 @@ export class GraphService {
       return envelope;
     } catch (err: any) {
       // Graceful fallback to client-side demo dataset if backend is unreachable
+      let fallbackGraph = onboardingGraphData;
+      if (filter?.userRole === 'EMPLOYEE') {
+        const employeeAllowedNodeIds = new Set([
+          'wf-onboarding',
+          'person-employee',
+          'task-employee-record',
+          'sys-it-account',
+          'appr-security',
+          'task-verification',
+          'wf-001',
+          'emp-90214',
+          'tsk-001',
+          'tsk-002',
+          'tsk-004',
+          'sec-tkt-9912',
+          'bo-001',
+          'out-001'
+        ]);
+        const scopedNodes = onboardingGraphData.nodes.filter((n) => employeeAllowedNodeIds.has(n.id));
+        const activeIds = new Set(scopedNodes.map((n) => n.id));
+        const scopedEdges = onboardingGraphData.edges.filter((e) => activeIds.has(e.source) && activeIds.has(e.target));
+        fallbackGraph = {
+          ...onboardingGraphData,
+          nodes: scopedNodes,
+          edges: scopedEdges
+        };
+      }
       return {
-        graph: onboardingGraphData,
+        graph: fallbackGraph,
         isDemo: true,
         databaseConnected: false,
         message: `Offline mode: ${err.message}. Serving local demo graph.`,
         error: err.message,
         queryStats: {
-          nodesCount: onboardingGraphData.nodes.length,
-          edgesCount: onboardingGraphData.edges.length,
+          nodesCount: fallbackGraph.nodes.length,
+          edgesCount: fallbackGraph.edges.length,
           executionTimeMs: 2,
           cypherQuery: 'MATCH (n)-[r]->(m) RETURN n, r, m'
         }
