@@ -23,6 +23,17 @@ function sendJson(res: ServerResponse, statusCode: number, data: any) {
  * Helper to read JSON request body
  */
 async function readBody(req: IncomingMessage): Promise<any> {
+  if ((req as any).body) {
+    const raw = (req as any).body;
+    if (typeof raw === 'string') {
+      try {
+        return JSON.parse(raw);
+      } catch {
+        return {};
+      }
+    }
+    return raw;
+  }
   return new Promise((resolve) => {
     let body = '';
     req.on('data', (chunk) => {
@@ -35,6 +46,10 @@ async function readBody(req: IncomingMessage): Promise<any> {
         resolve({});
       }
     });
+    // Fallback if stream already ended
+    if (req.readableEnded) {
+      resolve({});
+    }
   });
 }
 
@@ -167,12 +182,22 @@ export async function handleApiRequest(
       const body = await readBody(req);
 
       // Backend authorization: EMPLOYEE cannot approve or reject actions
-      if (body.actor?.role === 'EMPLOYEE') {
+      const actorRole = body.actor?.role || (req.headers['x-user-role'] as string);
+      if (actorRole === 'EMPLOYEE') {
         sendJson(res, 403, {
           success: false,
           error: "Forbidden: Role 'EMPLOYEE' lacks authorization to approve or reject actions. Manager or Admin/Operations role required."
         });
         return true;
+      }
+
+      if (!body.actor) {
+        body.actor = {
+          id: 'usr-default',
+          name: actorRole === 'ADMIN_OPERATIONS' ? 'Sarah Lin' : 'Authorized Reviewer',
+          role: actorRole || 'ADMIN_OPERATIONS',
+          email: 'reviewer@closureloop.io'
+        };
       }
 
       const result = actionRepository.transitionAction(actionId, body);
@@ -185,21 +210,23 @@ export async function handleApiRequest(
     if (execMatch && req.method === 'POST') {
       const actionId = execMatch[1];
       const body = await readBody(req);
-      const actor = body.actor || {
-        id: 'usr-default',
-        name: 'Authorized Operator',
-        role: 'ADMIN_OPERATIONS',
-        email: 'operator@closureloop.io'
-      };
+      const actorRole = body.actor?.role || (req.headers['x-user-role'] as string);
 
       // Backend authorization: EMPLOYEE cannot execute system actions
-      if (actor.role === 'EMPLOYEE') {
+      if (actorRole === 'EMPLOYEE') {
         sendJson(res, 403, {
           success: false,
           error: "Forbidden: Role 'EMPLOYEE' lacks operational authorization to execute system actions."
         });
         return true;
       }
+
+      const actor = body.actor || {
+        id: 'usr-default',
+        name: 'Authorized Operator',
+        role: 'ADMIN_OPERATIONS',
+        email: 'operator@closureloop.io'
+      };
 
       const result = actionRepository.executeAction(actionId, actor);
       sendJson(res, result.success ? 200 : 400, result);
