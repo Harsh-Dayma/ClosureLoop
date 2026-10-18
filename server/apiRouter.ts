@@ -165,6 +165,16 @@ export async function handleApiRequest(
     if (reviewMatch && req.method === 'POST') {
       const actionId = reviewMatch[1];
       const body = await readBody(req);
+
+      // Backend authorization: EMPLOYEE cannot approve or reject actions
+      if (body.actor?.role === 'EMPLOYEE') {
+        sendJson(res, 403, {
+          success: false,
+          error: "Forbidden: Role 'EMPLOYEE' lacks authorization to approve or reject actions. Manager or Admin/Operations role required."
+        });
+        return true;
+      }
+
       const result = actionRepository.transitionAction(actionId, body);
       sendJson(res, result.success ? 200 : 400, result);
       return true;
@@ -178,9 +188,19 @@ export async function handleApiRequest(
       const actor = body.actor || {
         id: 'usr-default',
         name: 'Authorized Operator',
-        role: 'SecOps Approver',
+        role: 'ADMIN_OPERATIONS',
         email: 'operator@closureloop.io'
       };
+
+      // Backend authorization: EMPLOYEE cannot execute system actions
+      if (actor.role === 'EMPLOYEE') {
+        sendJson(res, 403, {
+          success: false,
+          error: "Forbidden: Role 'EMPLOYEE' lacks operational authorization to execute system actions."
+        });
+        return true;
+      }
+
       const result = actionRepository.executeAction(actionId, actor);
       sendJson(res, result.success ? 200 : 400, result);
       return true;

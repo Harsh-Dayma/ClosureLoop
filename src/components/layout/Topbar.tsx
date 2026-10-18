@@ -39,23 +39,25 @@ export const Topbar: React.FC<TopbarProps> = ({
   const getModuleBreadcrumb = (mod: NavModuleId) => {
     switch (mod) {
       case 'overview':
-        return 'Overview';
+        return 'Home';
       case 'workflows':
-        return 'Workflows';
+        return currentPersona.role === 'MANAGER' ? 'Team Workflows' : 'Workflows';
       case 'tasks':
       case 'action_center':
-        return 'My Tasks';
+        return currentPersona.role === 'EMPLOYEE' ? 'My Work' : currentPersona.role === 'ADMIN_OPERATIONS' ? 'Action Queue' : 'My Tasks';
+      case 'attention_needed':
+        return 'Attention Needed';
       case 'history':
       case 'verification_memory':
-        return 'History & Audit';
+        return 'History';
       case 'investigations':
         return 'Investigation';
       case 'graph_explorer':
         return 'Graph Explorer';
       case 'settings':
-        return 'Settings';
+        return currentPersona.role === 'ADMIN_OPERATIONS' ? 'System Health' : 'Settings';
       default:
-        return 'Overview';
+        return 'Home';
     }
   };
 

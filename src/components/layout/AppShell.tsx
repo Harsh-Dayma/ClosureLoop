@@ -46,6 +46,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         collapsed={isSidebarCollapsed}
         onToggleCollapse={onToggleSidebar}
+        currentRole={currentPersona.role}
       />
 
       {/* Main Content Area */}

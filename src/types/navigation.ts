@@ -2,12 +2,13 @@ export type NavModuleId =
   | 'overview'
   | 'workflows'
   | 'tasks'
+  | 'attention_needed'
   | 'history'
+  | 'settings'
   | 'investigations'
   | 'graph_explorer'
   | 'action_center'
-  | 'verification_memory'
-  | 'settings';
+  | 'verification_memory';
 
 export interface NavModuleInfo {
   id: NavModuleId;

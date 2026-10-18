@@ -28,6 +28,7 @@ interface WorkflowRegistryViewProps {
   onInvestigateWorkflow: (workflowTitle: string, blocker: string, workflowId?: string) => void;
   onJumpToGraph: () => void;
   onOpenInvestigation: () => void;
+  initialStatusFilter?: string;
 }
 
 export const WorkflowRegistryView: React.FC<WorkflowRegistryViewProps> = ({
@@ -36,13 +37,14 @@ export const WorkflowRegistryView: React.FC<WorkflowRegistryViewProps> = ({
   onInvestigateWorkflow,
   onJumpToGraph,
   onOpenInvestigation,
+  initialStatusFilter,
 }) => {
   // All workflows dataset state (initialized from mock data, supports registering new workflows)
   const [allWorkflows, setAllWorkflows] = useState<WorkflowItem[]>(sampleWorkflows);
 
   // Filters & Sorting state
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<string>('All');
+  const [selectedStatus, setSelectedStatus] = useState<string>(initialStatusFilter || 'All');
   const [selectedTeam, setSelectedTeam] = useState<string>('All Teams');
   const [selectedUrgency, setSelectedUrgency] = useState<string>('All');
   const [selectedSystem, setSelectedSystem] = useState<string>('All Systems');
