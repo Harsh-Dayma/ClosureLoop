@@ -22,6 +22,9 @@ export interface UserPersona {
     canTriggerTechnicalActions: boolean;
     canManageSettings: boolean;
     canViewExecutiveAudits: boolean;
+    canViewFullEnterpriseGraph: boolean;
+    canExecuteCypherQueries: boolean;
+    canInvestigateDeepGraph: boolean;
   };
 }
 
@@ -46,7 +49,10 @@ export const USER_PERSONAS: Record<UserRole, UserPersona> = {
       canSignOffSecurity: false,
       canTriggerTechnicalActions: false,
       canManageSettings: false,
-      canViewExecutiveAudits: false
+      canViewExecutiveAudits: false,
+      canViewFullEnterpriseGraph: false,
+      canExecuteCypherQueries: false,
+      canInvestigateDeepGraph: false
     }
   },
   MANAGER: {
@@ -70,7 +76,10 @@ export const USER_PERSONAS: Record<UserRole, UserPersona> = {
       canSignOffSecurity: false,
       canTriggerTechnicalActions: true,
       canManageSettings: false,
-      canViewExecutiveAudits: true
+      canViewExecutiveAudits: true,
+      canViewFullEnterpriseGraph: true,
+      canExecuteCypherQueries: false,
+      canInvestigateDeepGraph: true
     }
   },
   ADMIN_OPERATIONS: {
@@ -94,7 +103,10 @@ export const USER_PERSONAS: Record<UserRole, UserPersona> = {
       canSignOffSecurity: true,
       canTriggerTechnicalActions: true,
       canManageSettings: true,
-      canViewExecutiveAudits: true
+      canViewExecutiveAudits: true,
+      canViewFullEnterpriseGraph: true,
+      canExecuteCypherQueries: true,
+      canInvestigateDeepGraph: true
     }
   }
 };

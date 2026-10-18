@@ -289,6 +289,7 @@ export const SimpleOverviewDashboard: React.FC<SimpleOverviewDashboardProps> = (
           </div>
 
           <DependencyGraphHero
+            currentPersona={currentPersona}
             onOpenExplorer={() => {
               if (onOpenExplorer) {
                 onOpenExplorer(topBlockedWorkflow?.id);

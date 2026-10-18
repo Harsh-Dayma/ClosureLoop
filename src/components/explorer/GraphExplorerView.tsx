@@ -20,6 +20,7 @@ import type {
   NodeStatus, 
   GraphResponseEnvelope 
 } from '../../types/graph.js';
+import type { UserPersona } from '../../types/role.js';
 import {
   Network,
   RefreshCw,
@@ -35,7 +36,9 @@ import {
   Info,
   Zap,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 
 interface GraphExplorerViewProps {
@@ -44,13 +47,15 @@ interface GraphExplorerViewProps {
   onOpenActionCenter?: (actionId?: string) => void;
   onSelectWorkflow?: (workflowId: string) => void;
   initialWorkflowId?: string;
+  currentPersona?: UserPersona;
 }
 
 export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
   onBackToOverview,
   onOpenInvestigation,
   onOpenActionCenter,
-  initialWorkflowId = 'wf-001'
+  initialWorkflowId = 'wf-001',
+  currentPersona
 }) => {
   // Graph Data & Envelope
   const [graphEnvelope, setGraphEnvelope] = useState<GraphResponseEnvelope | null>(null);
@@ -265,6 +270,50 @@ export const GraphExplorerView: React.FC<GraphExplorerViewProps> = ({
       });
     return { incoming, outgoing };
   }, [selectedNodeId, graphEnvelope]);
+
+  // Enterprise Role Authorization Guard for EMPLOYEE
+  if (currentPersona?.role === 'EMPLOYEE') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-200 select-none min-h-[600px]">
+        <div className="max-w-md w-full bg-[#0d1322] border border-slate-800 rounded-2xl p-6 shadow-2xl text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
+            <Lock className="w-7 h-7" />
+          </div>
+
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/60">
+              Access Restricted · Least Privilege Policy
+            </span>
+            <h2 className="text-lg font-bold text-white mt-2">
+              Enterprise Graph Explorer Locked
+            </h2>
+            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+              Role <strong className="text-slate-200 font-mono">EMPLOYEE</strong> ({currentPersona.name}) does not have security authorization to inspect full organizational dependency topologies or execute raw OpenCypher queries on FalkorDB.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800/80 text-[11px] text-slate-300 text-left space-y-1.5">
+            <div className="flex items-center gap-1.5 text-slate-400 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+              <span>Authorized Locations for Employee Role:</span>
+            </div>
+            <ul className="list-disc list-inside text-slate-400 pl-1 space-y-1 text-[10px]">
+              <li>Home Dashboard &rarr; Scoped Personal Onboarding Subgraph</li>
+              <li>My Work &rarr; Pending Tasks & Identity Handshakes</li>
+              <li>History &rarr; Cryptographic Outcome Verification</li>
+            </ul>
+          </div>
+
+          <button
+            onClick={onBackToOverview}
+            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md flex items-center justify-center gap-2"
+          >
+            <span>Return to Home Dashboard</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-slate-50 overflow-hidden select-none">

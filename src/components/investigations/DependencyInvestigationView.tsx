@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import type { InvestigationCase, FindingCategory } from '../../types/investigation';
+import type { UserPersona } from '../../types/role';
 import { InvestigationService } from '../../services/investigationService';
 import { mockInvestigationCases } from '../../data/mockInvestigations';
 import { EmptyState } from '../ui/EmptyState';
@@ -23,7 +24,9 @@ import {
   RefreshCw,
   ArrowRight,
   Info,
-  Zap
+  Zap,
+  Lock,
+  ShieldCheck
 } from 'lucide-react';
 
 interface DependencyInvestigationViewProps {
@@ -32,6 +35,7 @@ interface DependencyInvestigationViewProps {
   onOpenExplorer: () => void;
   onOpenActionCenter?: (actionId?: string) => void;
   selectedWorkflowId?: string;
+  currentPersona?: UserPersona;
 }
 
 export const DependencyInvestigationView: React.FC<DependencyInvestigationViewProps> = ({
@@ -40,6 +44,7 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
   onOpenExplorer,
   onOpenActionCenter,
   selectedWorkflowId,
+  currentPersona,
 }) => {
   // Data state initialized directly from mock investigation adapter
   const [cases, setCases] = useState<InvestigationCase[]>(mockInvestigationCases);
@@ -146,6 +151,48 @@ export const DependencyInvestigationView: React.FC<DependencyInvestigationViewPr
     setActionNotice(`Escalation rule SEC-ESC-03 executed. Temporary delegation routed to ${deputyName}.`);
     setTimeout(() => setActionNotice(null), 4000);
   };
+
+  // Enterprise Role Authorization Guard for EMPLOYEE
+  if (currentPersona?.role === 'EMPLOYEE') {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center p-6 bg-slate-950 text-slate-200 select-none min-h-[600px]">
+        <div className="max-w-md w-full bg-[#0d1322] border border-slate-800 rounded-2xl p-6 shadow-2xl text-center space-y-4">
+          <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mx-auto shadow-inner">
+            <Lock className="w-7 h-7" />
+          </div>
+
+          <div>
+            <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 font-semibold px-2 py-0.5 rounded bg-amber-950/60 border border-amber-800/60">
+              Access Restricted · Least Privilege Policy
+            </span>
+            <h2 className="text-lg font-bold text-white mt-2">
+              Investigation Room Restricted
+            </h2>
+            <p className="text-xs text-slate-400 mt-2 leading-relaxed">
+              Role <strong className="text-slate-200 font-mono">EMPLOYEE</strong> ({currentPersona.name}) does not have clearance to open deep evidence vaults or audit cross-system investigation logs.
+            </p>
+          </div>
+
+          <div className="p-3 rounded-lg bg-slate-900 border border-slate-800/80 text-[11px] text-slate-300 text-left space-y-1.5">
+            <div className="flex items-center gap-1.5 text-slate-400 font-medium">
+              <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+              <span>Recommended Action:</span>
+            </div>
+            <p className="text-slate-400 text-[11px] leading-relaxed">
+              Check the scoped personal graph on your Home Dashboard. All items requiring your personal attention are highlighted there.
+            </p>
+          </div>
+
+          <button
+            onClick={onBackToOverview}
+            className="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md flex items-center justify-center gap-2"
+          >
+            <span>Return to Home Dashboard</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 select-none font-sans text-slate-900">

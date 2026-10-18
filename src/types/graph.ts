@@ -28,6 +28,7 @@ export interface GraphFilterParams {
   entityType?: EntityType | 'ALL';
   status?: NodeStatus | 'ALL';
   onlyBlockers?: boolean;
+  userRole?: string;
 }
 
 export interface GraphResponseEnvelope {

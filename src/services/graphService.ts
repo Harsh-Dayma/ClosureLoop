@@ -58,9 +58,15 @@ export class GraphService {
       if (filter?.entityType && filter.entityType !== 'ALL') params.append('entityType', filter.entityType);
       if (filter?.status && filter.status !== 'ALL') params.append('status', filter.status);
       if (filter?.onlyBlockers) params.append('onlyBlockers', 'true');
+      if (filter?.userRole) params.append('userRole', filter.userRole);
 
       const url = `/api/graph${params.toString() ? `?${params.toString()}` : ''}`;
-      const res = await fetch(url);
+      const headers: Record<string, string> = {};
+      if (filter?.userRole) {
+        headers['x-user-role'] = filter.userRole;
+      }
+
+      const res = await fetch(url, { headers });
       
       if (!res.ok) {
         throw new Error(`Graph API returned status ${res.status}`);
@@ -89,11 +95,20 @@ export class GraphService {
   /**
    * Execute parameterized Cypher query on backend
    */
-  public static async executeCypher(query: string, params?: Record<string, any>): Promise<any> {
+  public static async executeCypher(
+    query: string, 
+    params?: Record<string, any>,
+    userRole?: string
+  ): Promise<any> {
     try {
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (userRole) {
+        headers['x-user-role'] = userRole;
+      }
+
       const res = await fetch('/api/cypher', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ query, params })
       });
       return await res.json();

@@ -362,6 +362,27 @@ export class GraphRepository {
       // Apply filters to in-memory fallback
       let filteredNodes = [...fallbackGraphData.nodes];
 
+      // Role-based authorization & least-privilege scoping for EMPLOYEE
+      if (filter?.userRole === 'EMPLOYEE') {
+        const employeeAllowedIds = new Set(['wf-001', 'emp-90214', 'tsk-001', 'tsk-002', 'tsk-004', 'sec-tkt-9912', 'out-001']);
+        filteredNodes = filteredNodes
+          .filter((n) => employeeAllowedIds.has(n.id))
+          .map((n) => {
+            if (n.id === 'sec-tkt-9912') {
+              return {
+                ...n,
+                data: {
+                  ...n.data,
+                  sublabel: 'Under InfoSec Review',
+                  blockerReason: 'Awaiting standard Security sign-off. Turnaround SLA: 24-48 hours. No action required from you.',
+                  cypherQuery: '// OpenCypher query inspection restricted for EMPLOYEE role under Enterprise Security Policy'
+                }
+              };
+            }
+            return n;
+          });
+      }
+
       if (filter?.entityType && filter.entityType !== 'ALL') {
         filteredNodes = filteredNodes.filter((n) => n.data.entityType === filter.entityType);
       }
@@ -471,12 +492,23 @@ export class GraphRepository {
         }
       }
 
+      let liveNodes = Array.from(nodesMap.values());
+      let liveEdges = edgesList;
+
+      if (filter?.userRole === 'EMPLOYEE') {
+        // Redact manager and admin infrastructure nodes for EMPLOYEE
+        const employeeAllowedIds = new Set(['wf-001', 'emp-90214', 'tsk-001', 'tsk-002', 'tsk-004', 'sec-tkt-9912', 'bo-001']);
+        liveNodes = liveNodes.filter((n) => employeeAllowedIds.has(n.id));
+        const activeLiveIds = new Set(liveNodes.map((n) => n.id));
+        liveEdges = liveEdges.filter((e) => activeLiveIds.has(e.source) && activeLiveIds.has(e.target));
+      }
+
       const liveGraph: FalkorGraphData = {
         graphId: health.graphName,
         name: `Live FalkorDB: ${health.graphName}`,
         description: `Direct Cypher graph retrieved from FalkorDB at ${health.host}:${health.port}`,
-        nodes: Array.from(nodesMap.values()),
-        edges: edgesList
+        nodes: liveNodes,
+        edges: liveEdges
       };
 
       return {

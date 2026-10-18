@@ -197,6 +197,7 @@ export function App() {
           onOpenExplorer={() => setActiveModule('graph_explorer')}
           onOpenActionCenter={() => setActiveModule('tasks')}
           selectedWorkflowId={investigationContext.workflowId}
+          currentPersona={currentPersona}
         />
       ) : activeModule === 'graph_explorer' ? (
         /* Level 4: Focused Dependency Graph Visualization */
@@ -208,6 +209,7 @@ export function App() {
           }}
           onOpenActionCenter={() => setActiveModule('tasks')}
           initialWorkflowId={investigationContext.workflowId || 'wf-001'}
+          currentPersona={currentPersona}
         />
       ) : (
         <ModulePlaceholder

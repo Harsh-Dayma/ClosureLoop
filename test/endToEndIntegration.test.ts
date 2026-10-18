@@ -151,6 +151,34 @@ async function runEndToEndTests() {
     assert.strictEqual(verif?.overallStatus, 'INCOMPLETE');
   });
 
+  // Test 7: Role-Based Authorization & Graph Scoping for Employee
+  await test('MODULE 1 & 4 — Role-Based Authorization & Least-Privilege Scoping for Employee', async () => {
+    // 1. Employee Role Query: Scoped to Personal Subgraph
+    const employeeTopology = await graphRepository.getGraphTopology({ userRole: 'EMPLOYEE' });
+    const employeeNodeIds = employeeTopology.graph.nodes.map(n => n.id);
+
+    // Administrative internal nodes must be redacted
+    assert.strictEqual(employeeNodeIds.includes('usr-008'), false, 'Sarah Lin SecOps node must be hidden from employee');
+    assert.strictEqual(employeeNodeIds.includes('tsk-003'), false, 'Manager Day-1 checklist task must be hidden from employee');
+    assert.strictEqual(employeeNodeIds.includes('app-core-svc'), false, 'Production cluster node must be hidden from employee');
+
+    // Personal nodes must be preserved
+    assert.strictEqual(employeeNodeIds.includes('emp-90214'), true, 'Rahul Sharma employee node must be present');
+    assert.strictEqual(employeeNodeIds.includes('wf-001'), true, 'Onboarding workflow node must be present');
+    assert.strictEqual(employeeNodeIds.includes('sec-tkt-9912'), true, 'Security approval node must be present');
+
+    // Approval node must be sanitized
+    const securityNode = employeeTopology.graph.nodes.find(n => n.id === 'sec-tkt-9912');
+    assert.ok(securityNode?.data.blockerReason?.includes('Turnaround SLA'), 'Security approval reason must be sanitized for employee');
+
+    // 2. Admin / Full Query: Returns complete enterprise topology
+    const adminTopology = await graphRepository.getGraphTopology({ userRole: 'ADMIN_OPERATIONS' });
+    const adminNodeIds = adminTopology.graph.nodes.map(n => n.id);
+    assert.strictEqual(adminNodeIds.includes('usr-008'), true, 'Admin must see Sarah Lin node');
+    assert.strictEqual(adminNodeIds.includes('tsk-003'), true, 'Admin must see manager checklist task');
+    assert.strictEqual(adminNodeIds.includes('app-core-svc'), true, 'Admin must see production cluster node');
+  });
+
   console.log('\n================================================================');
   console.log(`END-TO-END RESULTS: ${passed} passed, ${failed} failed out of ${passed + failed} tests`);
   console.log('================================================================\n');

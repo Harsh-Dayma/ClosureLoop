@@ -15,7 +15,7 @@ function sendJson(res: ServerResponse, statusCode: number, data: any) {
   res.setHeader('Content-Type', 'application/json');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-user-role');
   res.end(JSON.stringify(data, null, 2));
 }
 
@@ -70,7 +70,7 @@ export async function handleApiRequest(
     res.statusCode = 204;
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-user-role');
     res.end();
     return true;
   }
@@ -97,13 +97,15 @@ export async function handleApiRequest(
       return true;
     }
 
-    // 2. Graph topology with filters
+    // 2. Graph topology with filters & role scoping
     if (pathname === '/api/graph' && req.method === 'GET') {
+      const userRole = (req.headers['x-user-role'] as string) || parsedUrl.searchParams.get('userRole') || undefined;
       const filter: GraphFilterParams = {
         workflowId: parsedUrl.searchParams.get('workflowId') || undefined,
         entityType: (parsedUrl.searchParams.get('entityType') as any) || 'ALL',
         status: (parsedUrl.searchParams.get('status') as any) || 'ALL',
-        onlyBlockers: parsedUrl.searchParams.get('onlyBlockers') === 'true'
+        onlyBlockers: parsedUrl.searchParams.get('onlyBlockers') === 'true',
+        userRole
       };
 
       const result = await graphRepository.getGraphTopology(filter);
@@ -118,11 +120,22 @@ export async function handleApiRequest(
       return true;
     }
 
-    // 4. Parameterized Cypher query executor
+    // 4. Parameterized Cypher query executor (SecOps Admin / Manager only)
     if (pathname === '/api/cypher' && req.method === 'POST') {
       const body = await readBody(req);
       const cypher = body.query;
       const params = body.params || {};
+
+      // Backend Role Authorization: EMPLOYEE cannot execute raw Cypher queries
+      const actorRole = (req.headers['x-user-role'] as string) || body.actor?.role;
+      if (actorRole === 'EMPLOYEE') {
+        sendJson(res, 403, {
+          success: false,
+          error: "Forbidden: Role 'EMPLOYEE' lacks authorization to execute raw Cypher queries on FalkorDB. SecOps Admin role required.",
+          query: cypher
+        });
+        return true;
+      }
 
       if (!cypher || typeof cypher !== 'string') {
         sendJson(res, 400, {
