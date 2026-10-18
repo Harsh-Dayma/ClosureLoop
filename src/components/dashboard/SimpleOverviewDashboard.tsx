@@ -12,8 +12,10 @@ import {
   ShieldCheck, 
   Database,
   ChevronRight,
-  ListTodo
+  ListTodo,
+  Network
 } from 'lucide-react';
+import { DependencyGraphHero } from '../graph/DependencyGraphHero';
 
 interface SimpleOverviewDashboardProps {
   workflows: WorkflowItem[];
@@ -22,6 +24,7 @@ interface SimpleOverviewDashboardProps {
   onSelectWorkflow: (workflow: WorkflowItem, viewMode?: 'details' | 'investigation') => void;
   onOpenActionCenter: (actionId?: string) => void;
   onOpenExplorer?: (workflowId?: string) => void;
+  onOpenInvestigation?: (title?: string, blocker?: string, id?: string) => void;
   onOpenSettings: () => void;
 }
 
@@ -31,8 +34,11 @@ export const SimpleOverviewDashboard: React.FC<SimpleOverviewDashboardProps> = (
   falkorConnected,
   onSelectWorkflow,
   onOpenActionCenter,
+  onOpenExplorer,
+  onOpenInvestigation,
   onOpenSettings,
 }) => {
+  const [showGraphHero, setShowGraphHero] = React.useState(true);
   // Filter workflows according to the role's authorized visibility scope
   const getFilteredWorkflows = () => {
     switch (currentPersona.role) {
@@ -117,6 +123,20 @@ export const SimpleOverviewDashboard: React.FC<SimpleOverviewDashboardProps> = (
               <span>Action Queue</span>
             </button>
           )}
+
+          <button
+            type="button"
+            onClick={() => setShowGraphHero(!showGraphHero)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs font-medium transition-colors shadow-2xs ${
+              showGraphHero
+                ? 'bg-blue-50 text-blue-700 border-blue-200'
+                : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+            }`}
+            title="Toggle Knowledge Graph Hero"
+          >
+            <Network className="w-3.5 h-3.5 text-blue-600" />
+            <span>Graph Hero</span>
+          </button>
 
           <button
             type="button"
@@ -250,7 +270,42 @@ export const SimpleOverviewDashboard: React.FC<SimpleOverviewDashboardProps> = (
         </section>
       )}
 
-      {/* 4. THREE MAIN AREAS */}
+      {/* 4. KNOWLEDGE GRAPH HERO */}
+      {showGraphHero && (
+        <section className="space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+              <h2 className="text-sm font-bold uppercase tracking-wider text-slate-900">
+                Knowledge Graph Hero — Live Dependency Topology
+              </h2>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-200 font-semibold">
+                FalkorDB Property Graph
+              </span>
+            </div>
+            <span className="text-xs text-slate-400 hidden sm:inline">
+              Interactive property graph • Click any node to inspect prerequisite state
+            </span>
+          </div>
+
+          <DependencyGraphHero
+            onOpenExplorer={() => {
+              if (onOpenExplorer) {
+                onOpenExplorer(topBlockedWorkflow?.id);
+              }
+            }}
+            onOpenInvestigation={(title, blocker) => {
+              if (onOpenInvestigation) {
+                onOpenInvestigation(title, blocker, topBlockedWorkflow?.id);
+              } else {
+                onSelectWorkflow(topBlockedWorkflow, 'investigation');
+              }
+            }}
+          />
+        </section>
+      )}
+
+      {/* 5. THREE MAIN AREAS */}
       <div className="space-y-6">
         {/* A. NEEDS ATTENTION */}
         <section className="space-y-2.5">

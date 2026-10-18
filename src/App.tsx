@@ -126,6 +126,7 @@ export function App() {
             if (wfId) setInvestigationContext((prev) => ({ ...prev, workflowId: wfId }));
             setActiveModule('graph_explorer');
           }}
+          onOpenInvestigation={(title, blocker, id) => handleOpenInvestigation(title, blocker, id)}
           onOpenSettings={() => setActiveModule('settings')}
         />
       ) : activeModule === 'attention_needed' ? (
